@@ -47,14 +47,6 @@ func (m *mockSqlResult) RowsAffected() (int64, error) {
 	return m.RowsAffectedFn()
 }
 
-type mockSqlStmt struct {
-	QueryFn func(args ...interface{}) (*sql.Rows, error)
-}
-
-func (m *mockSqlStmt) Query(args ...interface{}) (*sql.Rows, error) {
-	return m.QueryFn(args...)
-}
-
 func TestCreateExpenseSuccess(t *testing.T) {
 	client := &mockDatabase{}
 	client.ExecFn = func(query string, args ...interface{}) (sql.Result, error) {
