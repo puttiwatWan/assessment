@@ -15,11 +15,11 @@ type Database interface {
 	QueryRow(query string, args ...interface{}) *sql.Row
 }
 
-type DB struct {
+type DBClient struct {
 	Client Database
 }
 
-func NewDB() *DB {
+func NewDB() *DBClient {
 	dbUrl := os.Getenv("DATABASE_URL")
 	db, err := sql.Open("postgres", dbUrl)
 	if err != nil {
@@ -28,7 +28,7 @@ func NewDB() *DB {
 
 	createTableIfNotExists(db)
 
-	return &DB{
+	return &DBClient{
 		Client: db,
 	}
 }
@@ -47,7 +47,7 @@ func createTableIfNotExists(db Database) {
 	}
 }
 
-func (db *DB) CreateExpense(ce body.Expense) error {
+func (db *DBClient) CreateExpense(ce body.Expense) error {
 	insertExpense := "INSERT INTO expenses (title, amount, note, tags) values ($1, $2, $3, $4)"
 	_, err := db.Client.Exec(insertExpense, ce.Title, ce.Amount, ce.Note, pq.Array(&ce.Tags))
 	return err

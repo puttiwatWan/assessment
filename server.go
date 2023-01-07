@@ -10,7 +10,7 @@ import (
 	"github.com/puttiwatWan/assessment/database"
 )
 
-var db *database.DB
+var db *database.DBClient
 
 type Err struct {
 	Message string `json:"message"`
