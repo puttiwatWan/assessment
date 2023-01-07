@@ -45,7 +45,6 @@ func TestCreateExpenseSuccess(t *testing.T) {
 	client.ExecFn = func(query string, args ...interface{}) (sql.Result, error) {
 		return &mockSqlResult{}, nil
 	}
-
 	db := DBClient{Client: client}
 
 	err := db.CreateExpense(body.Expense{})
@@ -58,10 +57,14 @@ func TestCreateExpenseError(t *testing.T) {
 	client.ExecFn = func(query string, args ...interface{}) (sql.Result, error) {
 		return nil, fmt.Errorf("boom")
 	}
-
 	db := DBClient{Client: client}
 
-	err := db.CreateExpense(body.Expense{})
+	err := db.CreateExpense(body.Expense{
+		Title:  "Spaghetti",
+		Amount: 70,
+		Note:   "food",
+		Tags:   []string{"daily"},
+	})
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "boom")
