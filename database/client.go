@@ -16,7 +16,7 @@ type Database interface {
 }
 
 type DBClient struct {
-	Client Database
+	client Database
 }
 
 func NewDB() *DBClient {
@@ -29,7 +29,7 @@ func NewDB() *DBClient {
 	createTableIfNotExists(db)
 
 	return &DBClient{
-		Client: db,
+		client: db,
 	}
 }
 
@@ -49,6 +49,10 @@ func createTableIfNotExists(db Database) {
 
 func (db *DBClient) CreateExpense(ce body.Expense) error {
 	insertExpense := "INSERT INTO expenses (title, amount, note, tags) values ($1, $2, $3, $4)"
-	_, err := db.Client.Exec(insertExpense, ce.Title, ce.Amount, ce.Note, pq.Array(&ce.Tags))
+	_, err := db.client.Exec(insertExpense, ce.Title, ce.Amount, ce.Note, pq.Array(&ce.Tags))
 	return err
+}
+
+func (db *DBClient) CloseConnection() {
+	db.client.Close()
 }
