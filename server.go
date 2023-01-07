@@ -10,9 +10,12 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/puttiwatWan/assessment/body"
 	"github.com/puttiwatWan/assessment/database"
+	"github.com/puttiwatWan/assessment/ports"
 )
 
-var db *database.DBClient
+var db ports.DBOperations
+
+const IdQueryParam = "id"
 
 type Err struct {
 	Message string `json:"message"`
@@ -36,14 +39,25 @@ func createExpenseHandler(c echo.Context) error {
 	return c.JSON(http.StatusCreated, in)
 }
 
+func getExpensesByIdHandler(c echo.Context) error {
+	id := c.Param(IdQueryParam)
+
+	expense, err := db.GetExpenseById(id)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, Err{Message: err.Error()})
+	}
+	return c.JSON(http.StatusCreated, expense)
+}
+
 func main() {
 	port := os.Getenv("PORT")
 
 	setUpDB()
-	defer db.Client.Close()
+	defer db.CloseConnection()
 
 	e := echo.New()
 	e.POST("/expenses", createExpenseHandler)
+	e.GET("/expenses/:"+IdQueryParam, getExpensesByIdHandler)
 
 	// Start server
 	go func() {
