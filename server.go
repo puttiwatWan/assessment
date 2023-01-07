@@ -24,7 +24,7 @@ func createExpenseHandler(c echo.Context) error {
 	var in body.Expense
 	err := c.Bind(&in)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, Err{Message: err.Error()})
+		return c.JSON(http.StatusBadRequest, Err{Message: err.Error()})
 	}
 
 	err = db.CreateExpense(in)
