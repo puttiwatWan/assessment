@@ -117,7 +117,7 @@ func TestUpdateExpenseByIdSuccess(t *testing.T) {
 	mockDb := DBClient{client: db}
 
 	expense, err := mockDb.UpdateExpenseById(body.Expense{
-		Id:     "1",
+		Id:     1,
 		Title:  "test title",
 		Amount: 70,
 		Note:   "test note",
@@ -146,7 +146,7 @@ func TestUpdateExpenseByIdError(t *testing.T) {
 	mockDb := DBClient{client: db}
 
 	_, err = mockDb.UpdateExpenseById(body.Expense{
-		Id:     "1",
+		Id:     1,
 		Title:  "test title",
 		Amount: 70,
 		Note:   "test note",

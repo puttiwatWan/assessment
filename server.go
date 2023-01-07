@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"github.com/puttiwatWan/assessment/body"
@@ -56,7 +57,11 @@ func UpdateExpenseByIdHandler(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, Err{Message: err.Error()})
 	}
-	in.Id = c.Param(IdQueryParam)
+	id := c.Param(IdQueryParam)
+	in.Id, err = strconv.Atoi(id)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, Err{Message: err.Error()})
+	}
 
 	expense, err := db.UpdateExpenseById(in)
 	if err != nil {

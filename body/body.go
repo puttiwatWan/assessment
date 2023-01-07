@@ -1,7 +1,7 @@
 package body
 
 type Expense struct {
-	Id     string   `json:"id"`
+	Id     int      `json:"id"`
 	Title  string   `json:"title"`
 	Amount float64  `json:"amount"`
 	Note   string   `json:"note"`
