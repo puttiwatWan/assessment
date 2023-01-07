@@ -156,3 +156,45 @@ func TestUpdateExpenseByIdError(t *testing.T) {
 	assert.Error(t, err)
 	assert.EqualError(t, err, "boom")
 }
+
+func TestGetExpensesSuccess(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Errorf("An error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	columns := []string{"id", "title", "amount", "note", "tags"}
+	mock.ExpectQuery("SELECT id, title, amount, note, tags FROM expenses").
+		WillReturnRows(sqlmock.NewRows(columns).AddRow("1", "test title", 70, "test note", pq.Array([]string{"test tag"})))
+
+	mockDb := DBClient{client: db}
+
+	expenses, err := mockDb.GetExpenses()
+
+	assert.NoError(t, err)
+	assert.Equal(t, 1, len(expenses))
+	assert.Equal(t, "1", expenses[0].Id)
+	assert.Equal(t, "test title", expenses[0].Title)
+	assert.Equal(t, float64(70), expenses[0].Amount)
+	assert.Equal(t, "test note", expenses[0].Note)
+	assert.Equal(t, []string{"test tag"}, expenses[0].Tags)
+}
+
+func TestGetExpensesError(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Errorf("An error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	mock.ExpectQuery("SELECT id, title, amount, note, tags FROM expenses").
+		WillReturnError(fmt.Errorf("boom"))
+
+	mockDb := DBClient{client: db}
+
+	_, err = mockDb.GetExpenses()
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "boom")
+}
