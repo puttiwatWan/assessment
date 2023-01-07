@@ -7,4 +7,5 @@ type DBOperations interface {
 	CreateExpense(ce body.Expense) (string, error)
 	GetExpenseById(id string) (body.Expense, error)
 	UpdateExpenseById(exp body.Expense) (body.Expense, error)
+	GetExpenses() ([]body.Expense, error)
 }

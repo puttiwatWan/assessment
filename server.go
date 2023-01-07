@@ -65,6 +65,14 @@ func UpdateExpenseByIdHandler(c echo.Context) error {
 	return c.JSON(http.StatusCreated, expense)
 }
 
+func getExpensesHandler(c echo.Context) error {
+	expenses, err := db.GetExpenses()
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, Err{Message: err.Error()})
+	}
+	return c.JSON(http.StatusCreated, expenses)
+}
+
 func main() {
 	port := os.Getenv("PORT")
 
@@ -75,6 +83,7 @@ func main() {
 	e.POST("/expenses", createExpenseHandler)
 	e.GET("/expenses/:"+IdQueryParam, getExpenseByIdHandler)
 	e.PUT("/expenses/:"+IdQueryParam, UpdateExpenseByIdHandler)
+	e.GET("/expenses", getExpensesHandler)
 
 	// Start server
 	go func() {

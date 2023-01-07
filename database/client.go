@@ -109,3 +109,26 @@ func (db *DBClient) UpdateExpenseById(exp body.Expense) (body.Expense, error) {
 
 	return expense, nil
 }
+
+func (db *DBClient) GetExpenses() ([]body.Expense, error) {
+	rows, err := db.client.Query("SELECT id, title, amount, note, tags FROM expenses")
+	if err != nil {
+		return []body.Expense{}, err
+	}
+	defer rows.Close()
+
+	var expenses []body.Expense
+	for rows.Next() {
+		var expense body.Expense
+		err := rows.Scan(&expense.Id, &expense.Title, &expense.Amount, &expense.Note, pq.Array(&expense.Tags))
+		if err != nil {
+			return []body.Expense{}, err
+		}
+		expenses = append(expenses, expense)
+	}
+	if rows.Err() != nil {
+		return []body.Expense{}, err
+	}
+
+	return expenses, nil
+}
