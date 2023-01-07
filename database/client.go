@@ -9,15 +9,8 @@ import (
 	"github.com/puttiwatWan/assessment/body"
 )
 
-type Database interface {
-	Close() error
-	Exec(query string, args ...interface{}) (sql.Result, error)
-	QueryRow(query string, args ...interface{}) *sql.Row
-	Prepare(query string) (*sql.Stmt, error)
-}
-
 type DBClient struct {
-	client Database
+	client *sql.DB
 }
 
 func NewDB() *DBClient {
@@ -34,7 +27,7 @@ func NewDB() *DBClient {
 	}
 }
 
-func createTableIfNotExists(db Database) {
+func createTableIfNotExists(db *sql.DB) {
 	createTable := `CREATE TABLE IF NOT EXISTS expenses (
 		id SERIAL PRIMARY KEY,
 		title TEXT,
