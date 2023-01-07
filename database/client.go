@@ -45,20 +45,20 @@ func (db *DBClient) CloseConnection() {
 	db.client.Close()
 }
 
-func (db *DBClient) CreateExpense(ce body.Expense) (string, error) {
+func (db *DBClient) CreateExpense(ce body.Expense) (int, error) {
 	// insertExpense := "INSERT INTO expenses (title, amount, note, tags) values ($1, $2, $3, $4) RETURNING id"
 	row := db.client.QueryRow("INSERT INTO expenses (title, amount, note, tags) values ($1, $2, $3, $4) RETURNING id", ce.Title, ce.Amount, ce.Note, pq.Array(&ce.Tags))
-	var id string
+	var id int
 	err := row.Scan(&id)
 	if err != nil {
-		return "", err
+		return 0, err
 	}
 
 	// _, err := db.client.Exec(insertExpense, ce.Title, ce.Amount, ce.Note, pq.Array(&ce.Tags))
 	return id, err
 }
 
-func (db *DBClient) GetExpenseById(id string) (body.Expense, error) {
+func (db *DBClient) GetExpenseById(id int) (body.Expense, error) {
 	row := db.client.QueryRow("SELECT id, title, amount, note, tags FROM expenses WHERE id = $1", id)
 
 	var expense body.Expense
@@ -108,4 +108,27 @@ func (db *DBClient) UpdateExpenseById(exp body.Expense) (body.Expense, error) {
 	}
 
 	return expense, nil
+}
+
+func (db *DBClient) GetExpenses() ([]body.Expense, error) {
+	rows, err := db.client.Query("SELECT id, title, amount, note, tags FROM expenses")
+	if err != nil {
+		return []body.Expense{}, err
+	}
+	defer rows.Close()
+
+	var expenses []body.Expense
+	for rows.Next() {
+		var expense body.Expense
+		err := rows.Scan(&expense.Id, &expense.Title, &expense.Amount, &expense.Note, pq.Array(&expense.Tags))
+		if err != nil {
+			return []body.Expense{}, err
+		}
+		expenses = append(expenses, expense)
+	}
+	if rows.Err() != nil {
+		return []body.Expense{}, err
+	}
+
+	return expenses, nil
 }
