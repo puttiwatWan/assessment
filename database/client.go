@@ -52,10 +52,17 @@ func (db *DBClient) CloseConnection() {
 	db.client.Close()
 }
 
-func (db *DBClient) CreateExpense(ce body.Expense) error {
-	insertExpense := "INSERT INTO expenses (title, amount, note, tags) values ($1, $2, $3, $4)"
-	_, err := db.client.Exec(insertExpense, ce.Title, ce.Amount, ce.Note, pq.Array(&ce.Tags))
-	return err
+func (db *DBClient) CreateExpense(ce body.Expense) (string, error) {
+	// insertExpense := "INSERT INTO expenses (title, amount, note, tags) values ($1, $2, $3, $4) RETURNING id"
+	row := db.client.QueryRow("INSERT INTO expenses (title, amount, note, tags) values ($1, $2, $3, $4) RETURNING id", ce.Title, ce.Amount, ce.Note, pq.Array(&ce.Tags))
+	var id string
+	err := row.Scan(&id)
+	if err != nil {
+		return "", err
+	}
+
+	// _, err := db.client.Exec(insertExpense, ce.Title, ce.Amount, ce.Note, pq.Array(&ce.Tags))
+	return id, err
 }
 
 func (db *DBClient) GetExpenseById(id string) (body.Expense, error) {
