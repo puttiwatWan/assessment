@@ -71,7 +71,7 @@ func (db *DBClient) GetExpenseById(id string) (body.Expense, error) {
 }
 
 func (db *DBClient) UpdateExpenseById(exp body.Expense) (body.Expense, error) {
-	// This is for partial update for PATCH operation
+	// partial update for PATCH operation
 	// updateQuery := "UPDATE expenses SET"
 	// valueNumber := 0
 	// var updateValue []interface{}
