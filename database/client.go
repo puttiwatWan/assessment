@@ -76,3 +76,43 @@ func (db *DBClient) GetExpenseById(id string) (body.Expense, error) {
 
 	return expense, nil
 }
+
+func (db *DBClient) UpdateExpenseById(exp body.Expense) (body.Expense, error) {
+	// This is for partial update for PATCH operation
+	// updateQuery := "UPDATE expenses SET"
+	// valueNumber := 0
+	// var updateValue []interface{}
+	// if exp.Title != "" {
+	// 	valueNumber += 1
+	// 	updateQuery += " title=$" + strconv.Itoa(valueNumber)
+	// 	updateValue = append(updateValue, &exp.Title)
+	// }
+	// if exp.Amount != 0 {
+	// 	valueNumber += 1
+	// 	updateQuery += " amount=$" + strconv.Itoa(valueNumber)
+	// 	updateValue = append(updateValue, &exp.Amount)
+	// }
+	// if exp.Note != "" {
+	// 	valueNumber += 1
+	// 	updateQuery += " note=$" + strconv.Itoa(valueNumber)
+	// 	updateValue = append(updateValue, &exp.Title)
+	// }
+	// if exp.Tags != nil && len(exp.Tags) != 0 {
+	// 	valueNumber += 1
+	// 	updateQuery += " tags=$" + strconv.Itoa(valueNumber)
+	// 	updateValue = append(updateValue, pq.Array(&exp.Tags))
+	// }
+	// valueNumber += 1
+	// updateQuery += " WHERE id=$" + strconv.Itoa(valueNumber) + " RETURNING id, title, amount, note, tags"
+	// updateValue = append(updateValue, &exp.Id)
+
+	row := db.client.QueryRow("UPDATE expenses SET title=$1, amount=$2, note=$3, tags=$4 WHERE id=$5 RETURNING id, title, amount, note, tags;", exp.Title, exp.Amount, exp.Note, pq.Array(exp.Tags), exp.Id)
+
+	var expense body.Expense
+	err := row.Scan(&expense.Id, &expense.Title, &expense.Amount, &expense.Note, pq.Array(&expense.Tags))
+	if err != nil {
+		return body.Expense{}, err
+	}
+
+	return expense, nil
+}

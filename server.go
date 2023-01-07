@@ -40,10 +40,25 @@ func createExpenseHandler(c echo.Context) error {
 	return c.JSON(http.StatusCreated, in)
 }
 
-func getExpensesByIdHandler(c echo.Context) error {
+func getExpenseByIdHandler(c echo.Context) error {
 	id := c.Param(IdQueryParam)
 
 	expense, err := db.GetExpenseById(id)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, Err{Message: err.Error()})
+	}
+	return c.JSON(http.StatusCreated, expense)
+}
+
+func UpdateExpenseByIdHandler(c echo.Context) error {
+	var in body.Expense
+	err := c.Bind(&in)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, Err{Message: err.Error()})
+	}
+	in.Id = c.Param(IdQueryParam)
+
+	expense, err := db.UpdateExpenseById(in)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, Err{Message: err.Error()})
 	}
@@ -58,7 +73,8 @@ func main() {
 
 	e := echo.New()
 	e.POST("/expenses", createExpenseHandler)
-	e.GET("/expenses/:"+IdQueryParam, getExpensesByIdHandler)
+	e.GET("/expenses/:"+IdQueryParam, getExpenseByIdHandler)
+	e.PUT("/expenses/:"+IdQueryParam, UpdateExpenseByIdHandler)
 
 	// Start server
 	go func() {
