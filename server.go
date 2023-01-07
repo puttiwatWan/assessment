@@ -32,10 +32,11 @@ func createExpenseHandler(c echo.Context) error {
 		return c.JSON(http.StatusBadRequest, Err{Message: err.Error()})
 	}
 
-	err = db.CreateExpense(in)
+	id, err := db.CreateExpense(in)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, Err{Message: err.Error()})
 	}
+	in.Id = id
 	return c.JSON(http.StatusCreated, in)
 }
 
