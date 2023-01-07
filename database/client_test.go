@@ -2,6 +2,7 @@ package database
 
 import (
 	"database/sql"
+	"fmt"
 	"testing"
 
 	"github.com/puttiwatWan/assessment/body"
@@ -50,4 +51,18 @@ func TestCreateExpenseSuccess(t *testing.T) {
 	err := db.CreateExpense(body.Expense{})
 
 	assert.NoError(t, err)
+}
+
+func TestCreateExpenseError(t *testing.T) {
+	client := &mockDatabase{}
+	client.ExecFn = func(query string, args ...interface{}) (sql.Result, error) {
+		return nil, fmt.Errorf("boom")
+	}
+
+	db := DBClient{Client: client}
+
+	err := db.CreateExpense(body.Expense{})
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "boom")
 }
