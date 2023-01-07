@@ -52,7 +52,7 @@ func getExpenseByIdHandler(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, Err{Message: err.Error()})
 	}
-	return c.JSON(http.StatusCreated, expense)
+	return c.JSON(http.StatusOK, expense)
 }
 
 func UpdateExpenseByIdHandler(c echo.Context) error {
@@ -71,7 +71,7 @@ func UpdateExpenseByIdHandler(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, Err{Message: err.Error()})
 	}
-	return c.JSON(http.StatusCreated, expense)
+	return c.JSON(http.StatusOK, expense)
 }
 
 func getExpensesHandler(c echo.Context) error {
@@ -79,11 +79,11 @@ func getExpensesHandler(c echo.Context) error {
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, Err{Message: err.Error()})
 	}
-	return c.JSON(http.StatusCreated, expenses)
+	return c.JSON(http.StatusOK, expenses)
 }
 
 func healthHandler(c echo.Context) error {
-	return c.JSON(http.StatusCreated, map[string]string{"status": "ok"})
+	return c.JSON(http.StatusOK, map[string]string{"status": "ok"})
 }
 
 func main() {
