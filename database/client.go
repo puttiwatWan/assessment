@@ -9,15 +9,8 @@ import (
 	"github.com/puttiwatWan/assessment/body"
 )
 
-type Database interface {
-	Close() error
-	Exec(query string, args ...interface{}) (sql.Result, error)
-	QueryRow(query string, args ...interface{}) *sql.Row
-	Prepare(query string) (*sql.Stmt, error)
-}
-
 type DBClient struct {
-	client Database
+	client *sql.DB
 }
 
 func NewDB() *DBClient {
@@ -34,7 +27,7 @@ func NewDB() *DBClient {
 	}
 }
 
-func createTableIfNotExists(db Database) {
+func createTableIfNotExists(db *sql.DB) {
 	createTable := `CREATE TABLE IF NOT EXISTS expenses (
 		id SERIAL PRIMARY KEY,
 		title TEXT,
@@ -67,6 +60,46 @@ func (db *DBClient) CreateExpense(ce body.Expense) (string, error) {
 
 func (db *DBClient) GetExpenseById(id string) (body.Expense, error) {
 	row := db.client.QueryRow("SELECT id, title, amount, note, tags FROM expenses WHERE id = $1", id)
+
+	var expense body.Expense
+	err := row.Scan(&expense.Id, &expense.Title, &expense.Amount, &expense.Note, pq.Array(&expense.Tags))
+	if err != nil {
+		return body.Expense{}, err
+	}
+
+	return expense, nil
+}
+
+func (db *DBClient) UpdateExpenseById(exp body.Expense) (body.Expense, error) {
+	// partial update for PATCH operation
+	// updateQuery := "UPDATE expenses SET"
+	// valueNumber := 0
+	// var updateValue []interface{}
+	// if exp.Title != "" {
+	// 	valueNumber += 1
+	// 	updateQuery += " title=$" + strconv.Itoa(valueNumber)
+	// 	updateValue = append(updateValue, &exp.Title)
+	// }
+	// if exp.Amount != 0 {
+	// 	valueNumber += 1
+	// 	updateQuery += " amount=$" + strconv.Itoa(valueNumber)
+	// 	updateValue = append(updateValue, &exp.Amount)
+	// }
+	// if exp.Note != "" {
+	// 	valueNumber += 1
+	// 	updateQuery += " note=$" + strconv.Itoa(valueNumber)
+	// 	updateValue = append(updateValue, &exp.Title)
+	// }
+	// if exp.Tags != nil && len(exp.Tags) != 0 {
+	// 	valueNumber += 1
+	// 	updateQuery += " tags=$" + strconv.Itoa(valueNumber)
+	// 	updateValue = append(updateValue, pq.Array(&exp.Tags))
+	// }
+	// valueNumber += 1
+	// updateQuery += " WHERE id=$" + strconv.Itoa(valueNumber) + " RETURNING id, title, amount, note, tags"
+	// updateValue = append(updateValue, &exp.Id)
+
+	row := db.client.QueryRow("UPDATE expenses SET title=$1, amount=$2, note=$3, tags=$4 WHERE id=$5 RETURNING id, title, amount, note, tags;", exp.Title, exp.Amount, exp.Note, pq.Array(exp.Tags), exp.Id)
 
 	var expense body.Expense
 	err := row.Scan(&expense.Id, &expense.Title, &expense.Amount, &expense.Note, pq.Array(&expense.Tags))

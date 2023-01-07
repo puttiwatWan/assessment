@@ -1,7 +1,6 @@
 package database
 
 import (
-	"database/sql"
 	"fmt"
 	"testing"
 
@@ -10,42 +9,6 @@ import (
 	"github.com/puttiwatWan/assessment/body"
 	"github.com/stretchr/testify/assert"
 )
-
-type mockDatabase struct {
-	CloseFn    func() error
-	ExecFn     func(query string, args ...interface{}) (sql.Result, error)
-	QueryRowFn func(query string, args ...interface{}) *sql.Row
-	PrepareFn  func(query string) (*sql.Stmt, error)
-}
-
-func (m *mockDatabase) Close() error {
-	return m.CloseFn()
-}
-
-func (m *mockDatabase) Exec(query string, args ...interface{}) (sql.Result, error) {
-	return m.ExecFn(query, args)
-}
-
-func (m *mockDatabase) QueryRow(query string, args ...interface{}) *sql.Row {
-	return m.QueryRowFn(query, args)
-}
-
-func (m *mockDatabase) Prepare(query string) (*sql.Stmt, error) {
-	return m.PrepareFn(query)
-}
-
-type mockSqlResult struct {
-	LastInsertIdFn func() (int64, error)
-	RowsAffectedFn func() (int64, error)
-}
-
-func (m *mockSqlResult) LastInsertId() (int64, error) {
-	return m.LastInsertIdFn()
-}
-
-func (m *mockSqlResult) RowsAffected() (int64, error) {
-	return m.RowsAffectedFn()
-}
 
 func TestCreateExpenseSuccess(t *testing.T) {
 	db, mock, err := sqlmock.New()
@@ -134,6 +97,61 @@ func TestGetExpenseByIdError(t *testing.T) {
 	mockDb := DBClient{client: db}
 
 	_, err = mockDb.GetExpenseById("1")
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "boom")
+}
+
+func TestUpdateExpenseByIdSuccess(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Errorf("An error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	columns := []string{"id", "title", "amount", "note", "tags"}
+	mock.ExpectQuery("UPDATE expenses SET").
+		WithArgs("test title", float64(70), "test note", pq.Array([]string{"test tag"}), "1").
+		WillReturnRows(sqlmock.NewRows(columns).AddRow("1", "test title", 70, "test note", pq.Array([]string{"test tag"})))
+
+	mockDb := DBClient{client: db}
+
+	expense, err := mockDb.UpdateExpenseById(body.Expense{
+		Id:     "1",
+		Title:  "test title",
+		Amount: 70,
+		Note:   "test note",
+		Tags:   []string{"test tag"},
+	})
+
+	assert.NoError(t, err)
+	assert.Equal(t, "1", expense.Id)
+	assert.Equal(t, "test title", expense.Title)
+	assert.Equal(t, float64(70), expense.Amount)
+	assert.Equal(t, "test note", expense.Note)
+	assert.Equal(t, []string{"test tag"}, expense.Tags)
+}
+
+func TestUpdateExpenseByIdError(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Errorf("An error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	mock.ExpectQuery("UPDATE expenses SET").
+		WithArgs("test title", float64(70), "test note", pq.Array([]string{"test tag"}), "1").
+		WillReturnError(fmt.Errorf("boom"))
+
+	mockDb := DBClient{client: db}
+
+	_, err = mockDb.UpdateExpenseById(body.Expense{
+		Id:     "1",
+		Title:  "test title",
+		Amount: 70,
+		Note:   "test note",
+		Tags:   []string{"test tag"},
+	})
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "boom")
