@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
+	"os/signal"
 
 	"github.com/labstack/echo/v4"
 	"github.com/puttiwatWan/assessment/body"
@@ -43,7 +45,19 @@ func main() {
 	e := echo.New()
 	e.POST("/expenses", createExpenseHandler)
 
-	log.Println("Starting server on port" + port)
-	log.Fatal(e.Start(port))
-	log.Println("Shutting down server")
+	// Start server
+	go func() {
+		if err := e.Start(port); err != nil && err != http.ErrServerClosed {
+			e.Logger.Fatal("shutting down the server")
+		}
+	}()
+
+	// Gracefully shutdown
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, os.Interrupt)
+	<-quit
+	if err := e.Shutdown(context.Background()); err != nil {
+		e.Logger.Fatal(err)
+	}
+	log.Println("Shutdown gracefully")
 }
