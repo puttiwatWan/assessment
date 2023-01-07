@@ -42,7 +42,11 @@ func createExpenseHandler(c echo.Context) error {
 }
 
 func getExpenseByIdHandler(c echo.Context) error {
-	id := c.Param(IdQueryParam)
+	strId := c.Param(IdQueryParam)
+	id, err := strconv.Atoi(strId)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, Err{Message: err.Error()})
+	}
 
 	expense, err := db.GetExpenseById(id)
 	if err != nil {

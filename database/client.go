@@ -58,7 +58,7 @@ func (db *DBClient) CreateExpense(ce body.Expense) (int, error) {
 	return id, err
 }
 
-func (db *DBClient) GetExpenseById(id string) (body.Expense, error) {
+func (db *DBClient) GetExpenseById(id int) (body.Expense, error) {
 	row := db.client.QueryRow("SELECT id, title, amount, note, tags FROM expenses WHERE id = $1", id)
 
 	var expense body.Expense

@@ -20,7 +20,7 @@ func TestCreateExpenseSuccess(t *testing.T) {
 	columns := []string{"id"}
 	mock.ExpectQuery("INSERT INTO expenses .+ values .+ RETURNING id").
 		WithArgs("test title", float64(70), "test note", pq.Array([]string{"test tag"})).
-		WillReturnRows(sqlmock.NewRows(columns).AddRow("1"))
+		WillReturnRows(sqlmock.NewRows(columns).AddRow(1))
 
 	mockDb := DBClient{client: db}
 
@@ -32,7 +32,7 @@ func TestCreateExpenseSuccess(t *testing.T) {
 	})
 
 	assert.NoError(t, err)
-	assert.Equal(t, "1", id)
+	assert.Equal(t, 1, id)
 }
 
 func TestCreateExpenseError(t *testing.T) {
@@ -68,15 +68,15 @@ func TestGetExpenseByIdSuccess(t *testing.T) {
 
 	columns := []string{"id", "title", "amount", "note", "tags"}
 	mock.ExpectQuery("SELECT id, title, amount, note, tags FROM expenses WHERE id = ").
-		WithArgs("1").
-		WillReturnRows(sqlmock.NewRows(columns).AddRow("1", "test title", 70, "test note", pq.Array([]string{"test tag"})))
+		WithArgs(1).
+		WillReturnRows(sqlmock.NewRows(columns).AddRow(1, "test title", 70, "test note", pq.Array([]string{"test tag"})))
 
 	mockDb := DBClient{client: db}
 
-	expense, err := mockDb.GetExpenseById("1")
+	expense, err := mockDb.GetExpenseById(1)
 
 	assert.NoError(t, err)
-	assert.Equal(t, "1", expense.Id)
+	assert.Equal(t, 1, expense.Id)
 	assert.Equal(t, "test title", expense.Title)
 	assert.Equal(t, float64(70), expense.Amount)
 	assert.Equal(t, "test note", expense.Note)
@@ -91,12 +91,12 @@ func TestGetExpenseByIdError(t *testing.T) {
 	defer db.Close()
 
 	mock.ExpectQuery("SELECT id, title, amount, note, tags FROM expenses WHERE id = ").
-		WithArgs("1").
+		WithArgs(1).
 		WillReturnError(fmt.Errorf("boom"))
 
 	mockDb := DBClient{client: db}
 
-	_, err = mockDb.GetExpenseById("1")
+	_, err = mockDb.GetExpenseById(1)
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "boom")
@@ -111,8 +111,8 @@ func TestUpdateExpenseByIdSuccess(t *testing.T) {
 
 	columns := []string{"id", "title", "amount", "note", "tags"}
 	mock.ExpectQuery("UPDATE expenses SET").
-		WithArgs("test title", float64(70), "test note", pq.Array([]string{"test tag"}), "1").
-		WillReturnRows(sqlmock.NewRows(columns).AddRow("1", "test title", 70, "test note", pq.Array([]string{"test tag"})))
+		WithArgs("test title", float64(70), "test note", pq.Array([]string{"test tag"}), 1).
+		WillReturnRows(sqlmock.NewRows(columns).AddRow(1, "test title", 70, "test note", pq.Array([]string{"test tag"})))
 
 	mockDb := DBClient{client: db}
 
@@ -125,7 +125,7 @@ func TestUpdateExpenseByIdSuccess(t *testing.T) {
 	})
 
 	assert.NoError(t, err)
-	assert.Equal(t, "1", expense.Id)
+	assert.Equal(t, 1, expense.Id)
 	assert.Equal(t, "test title", expense.Title)
 	assert.Equal(t, float64(70), expense.Amount)
 	assert.Equal(t, "test note", expense.Note)
@@ -140,7 +140,7 @@ func TestUpdateExpenseByIdError(t *testing.T) {
 	defer db.Close()
 
 	mock.ExpectQuery("UPDATE expenses SET").
-		WithArgs("test title", float64(70), "test note", pq.Array([]string{"test tag"}), "1").
+		WithArgs("test title", float64(70), "test note", pq.Array([]string{"test tag"}), 1).
 		WillReturnError(fmt.Errorf("boom"))
 
 	mockDb := DBClient{client: db}
@@ -166,7 +166,7 @@ func TestGetExpensesSuccess(t *testing.T) {
 
 	columns := []string{"id", "title", "amount", "note", "tags"}
 	mock.ExpectQuery("SELECT id, title, amount, note, tags FROM expenses").
-		WillReturnRows(sqlmock.NewRows(columns).AddRow("1", "test title", 70, "test note", pq.Array([]string{"test tag"})))
+		WillReturnRows(sqlmock.NewRows(columns).AddRow(1, "test title", 70, "test note", pq.Array([]string{"test tag"})))
 
 	mockDb := DBClient{client: db}
 
@@ -174,7 +174,7 @@ func TestGetExpensesSuccess(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(expenses))
-	assert.Equal(t, "1", expenses[0].Id)
+	assert.Equal(t, 1, expenses[0].Id)
 	assert.Equal(t, "test title", expenses[0].Title)
 	assert.Equal(t, float64(70), expenses[0].Amount)
 	assert.Equal(t, "test note", expenses[0].Note)
