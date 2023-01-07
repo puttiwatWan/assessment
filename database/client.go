@@ -13,10 +13,11 @@ type Database interface {
 	Close() error
 	Exec(query string, args ...interface{}) (sql.Result, error)
 	QueryRow(query string, args ...interface{}) *sql.Row
+	Prepare(query string) (*sql.Stmt, error)
 }
 
 type DBClient struct {
-	Client Database
+	client Database
 }
 
 func NewDB() *DBClient {
@@ -29,7 +30,7 @@ func NewDB() *DBClient {
 	createTableIfNotExists(db)
 
 	return &DBClient{
-		Client: db,
+		client: db,
 	}
 }
 
@@ -47,8 +48,24 @@ func createTableIfNotExists(db Database) {
 	}
 }
 
+func (db *DBClient) CloseConnection() {
+	db.client.Close()
+}
+
 func (db *DBClient) CreateExpense(ce body.Expense) error {
 	insertExpense := "INSERT INTO expenses (title, amount, note, tags) values ($1, $2, $3, $4)"
-	_, err := db.Client.Exec(insertExpense, ce.Title, ce.Amount, ce.Note, pq.Array(&ce.Tags))
+	_, err := db.client.Exec(insertExpense, ce.Title, ce.Amount, ce.Note, pq.Array(&ce.Tags))
 	return err
+}
+
+func (db *DBClient) GetExpenseById(id string) (body.Expense, error) {
+	row := db.client.QueryRow("SELECT id, title, amount, note, tags FROM expenses WHERE id = $1", id)
+
+	var expense body.Expense
+	err := row.Scan(&expense.Id, &expense.Title, &expense.Amount, &expense.Note, pq.Array(&expense.Tags))
+	if err != nil {
+		return body.Expense{}, err
+	}
+
+	return expense, nil
 }

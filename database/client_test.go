@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/lib/pq"
 	"github.com/puttiwatWan/assessment/body"
 	"github.com/stretchr/testify/assert"
 )
@@ -13,6 +15,7 @@ type mockDatabase struct {
 	CloseFn    func() error
 	ExecFn     func(query string, args ...interface{}) (sql.Result, error)
 	QueryRowFn func(query string, args ...interface{}) *sql.Row
+	PrepareFn  func(query string) (*sql.Stmt, error)
 }
 
 func (m *mockDatabase) Close() error {
@@ -24,7 +27,11 @@ func (m *mockDatabase) Exec(query string, args ...interface{}) (sql.Result, erro
 }
 
 func (m *mockDatabase) QueryRow(query string, args ...interface{}) *sql.Row {
-	return m.QueryRow(query, args)
+	return m.QueryRowFn(query, args)
+}
+
+func (m *mockDatabase) Prepare(query string) (*sql.Stmt, error) {
+	return m.PrepareFn(query)
 }
 
 type mockSqlResult struct {
@@ -45,7 +52,7 @@ func TestCreateExpenseSuccess(t *testing.T) {
 	client.ExecFn = func(query string, args ...interface{}) (sql.Result, error) {
 		return &mockSqlResult{}, nil
 	}
-	db := DBClient{Client: client}
+	db := DBClient{client: client}
 
 	err := db.CreateExpense(body.Expense{})
 
@@ -57,7 +64,7 @@ func TestCreateExpenseError(t *testing.T) {
 	client.ExecFn = func(query string, args ...interface{}) (sql.Result, error) {
 		return nil, fmt.Errorf("boom")
 	}
-	db := DBClient{Client: client}
+	db := DBClient{client: client}
 
 	err := db.CreateExpense(body.Expense{
 		Title:  "Spaghetti",
@@ -65,6 +72,49 @@ func TestCreateExpenseError(t *testing.T) {
 		Note:   "food",
 		Tags:   []string{"daily"},
 	})
+
+	assert.Error(t, err)
+	assert.EqualError(t, err, "boom")
+}
+
+func TestGetExpenseByIdSuccess(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Errorf("An error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	columns := []string{"id", "title", "amount", "note", "tags"}
+	mock.ExpectQuery("SELECT id, title, amount, note, tags FROM expenses WHERE id = ").
+		WithArgs("1").
+		WillReturnRows(sqlmock.NewRows(columns).AddRow("1", "test title", 70, "test note", pq.Array([]string{"test tag"})))
+
+	mockDb := DBClient{client: db}
+
+	expense, err := mockDb.GetExpenseById("1")
+
+	assert.NoError(t, err)
+	assert.Equal(t, "1", expense.Id)
+	assert.Equal(t, "test title", expense.Title)
+	assert.Equal(t, float64(70), expense.Amount)
+	assert.Equal(t, "test note", expense.Note)
+	assert.Equal(t, []string{"test tag"}, expense.Tags)
+}
+
+func TestGetExpenseByIdError(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Errorf("An error '%s' was not expected when opening a stub database connection", err)
+	}
+	defer db.Close()
+
+	mock.ExpectQuery("SELECT id, title, amount, note, tags FROM expenses WHERE id = ").
+		WithArgs("1").
+		WillReturnError(fmt.Errorf("boom"))
+
+	mockDb := DBClient{client: db}
+
+	_, err = mockDb.GetExpenseById("1")
 
 	assert.Error(t, err)
 	assert.EqualError(t, err, "boom")
