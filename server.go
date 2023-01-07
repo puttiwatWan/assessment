@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/subtle"
 	"log"
 	"net/http"
 	"os"
@@ -9,6 +10,7 @@ import (
 	"strconv"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"github.com/puttiwatWan/assessment/body"
 	"github.com/puttiwatWan/assessment/database"
 	"github.com/puttiwatWan/assessment/ports"
@@ -96,6 +98,13 @@ func main() {
 	e.GET("/health", healthHandler)
 
 	g := e.Group("")
+	g.Use(middleware.BasicAuth(func(username, password string, c echo.Context) (bool, error) {
+		if subtle.ConstantTimeCompare([]byte(username), []byte("admin")) == 1 &&
+			subtle.ConstantTimeCompare([]byte(password), []byte("password")) == 1 {
+			return true, nil
+		}
+		return false, nil
+	}))
 	g.POST("/expenses", createExpenseHandler)
 	g.GET("/expenses/:"+IdQueryParam, getExpenseByIdHandler)
 	g.PUT("/expenses/:"+IdQueryParam, UpdateExpenseByIdHandler)
