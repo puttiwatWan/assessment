@@ -59,22 +59,12 @@ func (db *DBClient) CreateExpense(ce body.Expense) error {
 }
 
 func (db *DBClient) GetExpenseById(id string) (body.Expense, error) {
-	stmt, err := db.client.Prepare("SELECT id, title, amount, note, tags FROM expenses WHERE id = $1")
-	if err != nil {
-		return body.Expense{}, err
-	}
-
-	rows, err := stmt.Query(id)
-	if err != nil {
-		return body.Expense{}, err
-	}
+	row := db.client.QueryRow("SELECT id, title, amount, note, tags FROM expenses WHERE id = $1", id)
 
 	var expense body.Expense
-	for rows.Next() {
-		err := rows.Scan(&expense.Id, &expense.Title, &expense.Amount, &expense.Note, pq.Array(&expense.Tags))
-		if err != nil {
-			return body.Expense{}, err
-		}
+	err := row.Scan(&expense.Id, &expense.Title, &expense.Amount, &expense.Note, pq.Array(&expense.Tags))
+	if err != nil {
+		return body.Expense{}, err
 	}
 
 	return expense, nil
