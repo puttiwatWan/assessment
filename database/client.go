@@ -61,19 +61,19 @@ func (db *DBClient) CreateExpense(ce body.Expense) error {
 func (db *DBClient) GetExpenseById(id string) (body.Expense, error) {
 	stmt, err := db.client.Prepare("SELECT id, title, amount, note, tags FROM expenses WHERE id = $1")
 	if err != nil {
-		log.Fatal("cannot prepare query expense by id", err)
+		return body.Expense{}, err
 	}
 
 	rows, err := stmt.Query(id)
 	if err != nil {
-		log.Fatal("cannot query expense by id", err)
+		return body.Expense{}, err
 	}
 
 	var expense body.Expense
 	for rows.Next() {
 		err := rows.Scan(&expense.Id, &expense.Title, &expense.Amount, &expense.Note, pq.Array(&expense.Tags))
 		if err != nil {
-			log.Fatal("cannot scan row into variable", err)
+			return body.Expense{}, err
 		}
 	}
 
