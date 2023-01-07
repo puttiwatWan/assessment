@@ -82,6 +82,10 @@ func getExpensesHandler(c echo.Context) error {
 	return c.JSON(http.StatusCreated, expenses)
 }
 
+func healthHandler(c echo.Context) error {
+	return c.JSON(http.StatusCreated, map[string]string{"status": "ok"})
+}
+
 func main() {
 	port := os.Getenv("PORT")
 
@@ -89,10 +93,13 @@ func main() {
 	defer db.CloseConnection()
 
 	e := echo.New()
-	e.POST("/expenses", createExpenseHandler)
-	e.GET("/expenses/:"+IdQueryParam, getExpenseByIdHandler)
-	e.PUT("/expenses/:"+IdQueryParam, UpdateExpenseByIdHandler)
-	e.GET("/expenses", getExpensesHandler)
+	e.GET("/health", healthHandler)
+
+	g := e.Group("")
+	g.POST("/expenses", createExpenseHandler)
+	g.GET("/expenses/:"+IdQueryParam, getExpenseByIdHandler)
+	g.PUT("/expenses/:"+IdQueryParam, UpdateExpenseByIdHandler)
+	g.GET("/expenses", getExpensesHandler)
 
 	// Start server
 	go func() {
