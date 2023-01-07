@@ -13,6 +13,7 @@ type Database interface {
 	Close() error
 	Exec(query string, args ...interface{}) (sql.Result, error)
 	QueryRow(query string, args ...interface{}) *sql.Row
+	Prepare(query string) (*sql.Stmt, error)
 }
 
 type DBClient struct {
@@ -47,12 +48,34 @@ func createTableIfNotExists(db Database) {
 	}
 }
 
+func (db *DBClient) CloseConnection() {
+	db.client.Close()
+}
+
 func (db *DBClient) CreateExpense(ce body.Expense) error {
 	insertExpense := "INSERT INTO expenses (title, amount, note, tags) values ($1, $2, $3, $4)"
 	_, err := db.client.Exec(insertExpense, ce.Title, ce.Amount, ce.Note, pq.Array(&ce.Tags))
 	return err
 }
 
-func (db *DBClient) CloseConnection() {
-	db.client.Close()
+func (db *DBClient) GetExpenseById(id string) (body.Expense, error) {
+	stmt, err := db.client.Prepare("SELECT id, title, amount, note, tags FROM expenses WHERE id = $1")
+	if err != nil {
+		log.Fatal("cannot prepare query expense by id", err)
+	}
+
+	rows, err := stmt.Query(id)
+	if err != nil {
+		log.Fatal("cannot query expense by id", err)
+	}
+
+	var expense body.Expense
+	for rows.Next() {
+		err := rows.Scan(&expense.Id, &expense.Title, &expense.Amount, &expense.Note, pq.Array(&expense.Tags))
+		if err != nil {
+			log.Fatal("cannot scan row into variable", err)
+		}
+	}
+
+	return expense, nil
 }
